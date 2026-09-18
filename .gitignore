@@ -1,0 +1,11 @@
+/target
+**/*.rs.bk
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea/
+.vscode/
+__pycache__/
+.ipynb_checkpoints/
+.venv/
