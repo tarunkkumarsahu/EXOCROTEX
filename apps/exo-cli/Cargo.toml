@@ -1,0 +1,9 @@
+[package]
+name = "exo-cli"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+cognitive-core = { path = "../../crates/cognitive-core" }
+serde_json.workspace = true
+uuid.workspace = true
