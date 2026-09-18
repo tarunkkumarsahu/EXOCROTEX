@@ -24,7 +24,7 @@ The first milestone is a small, typed Rust cognitive kernel with:
 
 LLM providers, vector retrieval, PostgreSQL, Python experiments, and a desktop UI come later. The kernel should stay useful even if any model provider or agent framework changes.
 
-## Intended architecture
+## Architecture
 
 ```text
 Human
@@ -44,10 +44,51 @@ Interface / CLI
       LLMs / Python / tools
 ```
 
-## Build philosophy
-
 Rust owns trusted state, permissions, event semantics, and orchestration. Python will own fast AI/ML research and evaluation. TypeScript/Tauri can own the human interface. PostgreSQL can become the canonical persistent store.
+
+Read the deeper architecture notes in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Run V0
+
+Install stable Rust, then:
+
+```bash
+cargo check --workspace
+cargo test --workspace
+cargo run -p exo-cli
+```
+
+Inside the CLI:
+
+```text
+:remember Our first experiment compares chatbot vs cognitive kernel.
+:recall experiment
+:propose Send the experiment decision to professor
+:pending
+:approve <proposal-uuid>
+:status
+```
+
+The external-write proposal will remain blocked until explicit approval.
+
+## Repository layout
+
+```text
+apps/
+  exo-cli/             interactive kernel shell
+
+crates/
+  cognitive-core/      events, memory, policy, kernel
+
+docs/
+  ARCHITECTURE.md      design invariants and roadmap
+
+.github/workflows/
+  ci.yml               fmt, check, clippy, tests
+```
 
 ## Status
 
-**V0 bootstrap in progress.**
+**V0.1 foundation implemented on the cognitive-kernel feature branch.**
+
+Current scope is deliberately small: prove the kernel semantics first, then add persistence, model adapters, retrieval, and the full cognitive loop.
