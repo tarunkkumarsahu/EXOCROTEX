@@ -1,3 +1,5 @@
+import { invoke, isTauri } from '@tauri-apps/api/core'
+
 export type MemoryKind = 'Working' | 'Episodic' | 'Semantic' | 'Prospective'
 export type EpistemicType = 'Observation' | 'UserConfirmedFact' | 'Inference' | 'Hypothesis' | 'Prediction'
 
@@ -20,6 +22,16 @@ export interface WorkingFact { id: string; entity: string; attribute: string; va
 
 export class ApiError extends Error { constructor(message: string, public status: number) { super(message) } }
 
+// A packaged desktop app invokes the same Rust cognitive store directly. It does not
+// launch a localhost HTTP server or need two terminal windows. The browser build
+// retains the original V0.4 HTTP API, including its dev-server proxy.
+const desktop = isTauri()
+
+async function native<T>(command: string, args: Record<string, unknown> = {}): Promise<T> {
+  try { return await invoke<T>(command, args) }
+  catch (error) { throw new ApiError(String(error), 0) }
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   let response: Response
   try {
@@ -28,7 +40,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       headers: { 'x-exocortex-client': 'local-ui-v1', ...(init.body ? { 'content-type': 'application/json' } : {}), ...init.headers },
     })
   } catch {
-    throw new ApiError('Cannot reach the Rust API. Start cargo run -p exo-api in another terminal.', 0)
+    throw new ApiError('Cannot reach the Rust API. Start cargo run -p exo-api in another terminal, or open the desktop application.', 0)
   }
   const body: unknown = await response.json().catch(() => null)
   if (!response.ok) {
@@ -40,17 +52,17 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
-  health: () => request<{ ok: boolean }>('/health'),
-  status: () => request<Status>('/status'),
-  memories: (q = '') => request<StoredMemory[]>(`/memories?q=${encodeURIComponent(q)}`),
-  remember: (text: string, kind: MemoryKind, topic: string) => request<StoredMemory>('/memories', { method: 'POST', body: JSON.stringify({ text, kind, topic: topic.trim() || null }) }),
-  correct: (id: string, text: string) => request<StoredMemory>(`/memories/${id}`, { method: 'PATCH', body: JSON.stringify({ text }) }),
-  forget: (id: string) => request<{ redacted_revisions: number }>(`/memories/${id}`, { method: 'DELETE' }),
-  source: (id: string) => request<CognitiveEvent>(`/sources/${id}`),
-  conflicts: (id: string) => request<MemoryConflict[]>(`/conflicts/${id}`),
-  facts: (entity = '') => request<WorkingFact[]>(`/facts?entity=${encodeURIComponent(entity)}`),
-  observe: (source_key: string, version: number, value: string) => request<Observation>('/observations', { method: 'POST', body: JSON.stringify({ source_key, version, value }) }),
-  latest: (source_key: string) => request<Observation>(`/observations/latest?source_key=${encodeURIComponent(source_key)}`),
-  addFact: (entity: string, attribute: string, value: string, kind: 'Observed' | 'Derived', evidence_ids: string[]) =>
+  health: () => desktop ? native<{ ok: boolean }>('workspace_status').then(() => ({ ok: true })) : request<{ ok: boolean }>('/health'),
+  status: () => desktop ? native<Status>('workspace_status') : request<Status>('/status'),
+  memories: (q = '') => desktop ? native<StoredMemory[]>('list_memories', { query: q }) : request<StoredMemory[]>(`/memories?q=${encodeURIComponent(q)}`),
+  remember: (text: string, kind: MemoryKind, topic: string) => desktop ? native<StoredMemory>('remember', { text, kind, topic: topic.trim() || null }) : request<StoredMemory>('/memories', { method: 'POST', body: JSON.stringify({ text, kind, topic: topic.trim() || null }) }),
+  correct: (id: string, text: string) => desktop ? native<StoredMemory>('correct_memory', { id, text }) : request<StoredMemory>(`/memories/${id}`, { method: 'PATCH', body: JSON.stringify({ text }) }),
+  forget: (id: string) => desktop ? native<{ redacted_revisions: number }>('forget_memory', { id }) : request<{ redacted_revisions: number }>(`/memories/${id}`, { method: 'DELETE' }),
+  source: (id: string) => desktop ? native<CognitiveEvent>('memory_source', { id }) : request<CognitiveEvent>(`/sources/${id}`),
+  conflicts: (id: string) => desktop ? native<MemoryConflict[]>('memory_conflicts', { id }) : request<MemoryConflict[]>(`/conflicts/${id}`),
+  facts: (entity = '') => desktop ? native<WorkingFact[]>('list_facts', { entity }) : request<WorkingFact[]>(`/facts?entity=${encodeURIComponent(entity)}`),
+  observe: (source_key: string, version: number, value: string) => desktop ? native<Observation>('record_observation', { sourceKey: source_key, version, value }) : request<Observation>('/observations', { method: 'POST', body: JSON.stringify({ source_key, version, value }) }),
+  latest: (source_key: string) => desktop ? native<Observation>('latest_observation', { sourceKey: source_key }) : request<Observation>(`/observations/latest?source_key=${encodeURIComponent(source_key)}`),
+  addFact: (entity: string, attribute: string, value: string, kind: 'Observed' | 'Derived', evidence_ids: string[]) => desktop ? native<WorkingFact>('add_working_fact', { entity, attribute, value, kind, evidenceIds: evidence_ids }) :
     request<WorkingFact>('/facts', { method: 'POST', body: JSON.stringify({ entity, attribute, value, kind, evidence_ids }) }),
 }

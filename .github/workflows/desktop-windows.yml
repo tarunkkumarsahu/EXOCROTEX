@@ -1,0 +1,44 @@
+name: Desktop Windows
+
+on:
+  push:
+    branches: ["main", "feat/desktop-v06"]
+    paths:
+      - "apps/exo-web/**"
+      - "crates/cognitive-core/**"
+      - "Cargo.toml"
+      - ".github/workflows/desktop-windows.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-desktop:
+    runs-on: windows-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust MSVC
+        uses: dtolnay/rust-toolchain@stable
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/exo-web/package-lock.json
+      - name: Install web dependencies
+        working-directory: apps/exo-web
+        run: npm ci
+      - name: Build web assets and typecheck
+        working-directory: apps/exo-web
+        run: npm run build
+      - name: Build unsigned Windows desktop installer
+        working-directory: apps/exo-web
+        run: npm run desktop:build
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: exocortex-windows-v06-unsigned
+          path: apps/exo-web/src-tauri/target/release/bundle/nsis/*-setup.exe
+          if-no-files-found: error
