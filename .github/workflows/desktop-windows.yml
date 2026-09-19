@@ -2,7 +2,13 @@ name: Desktop Windows
 
 on:
   push:
-    branches: ["main", "feat/desktop-v06", "feat/local-ai-chat-v07"]
+    branches: ["main"]
+    paths:
+      - "apps/exo-web/**"
+      - "crates/cognitive-core/**"
+      - "Cargo.toml"
+      - ".github/workflows/desktop-windows.yml"
+  pull_request:
     paths:
       - "apps/exo-web/**"
       - "crates/cognitive-core/**"
