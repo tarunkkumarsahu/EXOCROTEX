@@ -73,7 +73,7 @@ dependencies = [
 
 [[package]]
 name = "cognitive-core"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "rusqlite",
@@ -101,7 +101,7 @@ dependencies = [
 
 [[package]]
 name = "exo-cli"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "cognitive-core",
  "serde_json",

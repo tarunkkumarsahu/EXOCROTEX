@@ -8,7 +8,9 @@ A Rust-first experimental human cognitive-extension system. The human retains au
 
 **V0.2** — local SQLite-backed memory store, four memory kinds, source/timestamp/epistemic tracking, correction/supersession, explicit-topic conflict flags, redaction, JSON export, standalone DB backups and restart tests.
 
-V0.2 is **not yet an AI reasoning engine**: the CLI does not use an LLM, execute external tools, automatically verify factual truth or run scheduled reminders. V0.1 action proposals remain session-only.
+**V0.3** — evidence-linked observations, explicit dependency tracking, source-version freshness, selective staleness, and potential conflict flags.
+
+V0.3 is **not yet an AI reasoning engine**: the CLI does not use an LLM, execute external tools, automatically verify factual truth or run scheduled reminders. V0.1 action proposals remain session-only.
 
 ## Start on Windows / PowerShell
 
@@ -34,7 +36,7 @@ Default DB: `%USERPROFILE%\.exocortex\memory.sqlite3` on Windows, or `$HOME/.exo
 
 Run `:help` for all commands, including `:remember-kind`, `:remember-topic`, `:conflicts`, `:correct`, `:forget`, `:export` and `:backup`.
 
-**Privacy:** The local database and its backups/exports can contain personal information. Keep them out of Git, avoid storing secrets in V0.2, and read [memory semantics and limits](docs/MEMORY_V02.md) before using deletion or backup features.
+**Privacy:** The local database and its backups/exports can contain personal information. Keep them out of Git, avoid storing secrets in V0.3, and read [memory semantics and limits](docs/MEMORY_V02.md) before using deletion or backup features.
 
 ## Structure
 
@@ -44,9 +46,11 @@ crates/cognitive-core/src/
   memory.rs        typed memory and provenance
   permission.rs    permission boundary (V0.1)
   kernel.rs        in-memory session kernel (V0.1)
-  store.rs         SQLite-backed V0.2 memory
+  store.rs         SQLite-backed V0.2 memory + V0.3 schema
+  working_state.rs evidence-linked working state
 crates/cognitive-core/tests/persistence.rs
+crates/cognitive-core/tests/working_state.rs
 apps/exo-cli/src/main.rs
 ```
 
-V0.3 will add evidence-linked working-state updates, source freshness and deterministic checks before tool execution. JARVIS remains a separate project until a stable, permission-aware cognitive API is available.
+V0.3 includes an explicit, **manual** evidence-linked working-state prototype. Try `:observe`, `:fact`, `:facts`, and `:latest` (see [V0.3 usage and limits](docs/WORKING_STATE_V03.md)). V0.4 will add a replaceable model adapter; no autonomous tool execution has been added. JARVIS remains a separate project until a stable, permission-aware cognitive API is available.
