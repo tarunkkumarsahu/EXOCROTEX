@@ -19,3 +19,7 @@ __pycache__/
 *.db-wal
 memory-export*.json
 memory-backup*.json
+
+# Frontend build artifacts
+**/node_modules/
+**/dist/

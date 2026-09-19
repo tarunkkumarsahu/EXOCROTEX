@@ -320,6 +320,22 @@ impl PersistentMemoryStore {
         Ok(result)
     }
 
+    /// Read the entire working-state projection for the visual workspace.
+    /// An explicit empty-entity query is not passed to `working_facts`, which
+    /// intentionally requires a valid entity label.
+    pub fn all_working_facts(&self) -> Result<Vec<WorkingFact>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id,entity,attribute,value,kind,status,created_at,stale_at
+             FROM working_facts ORDER BY rowid DESC",
+        )?;
+        let rows = stmt.query_map([], fact_from_row)?;
+        let mut result = Vec::new();
+        for row in rows {
+            result.push(self.fact_from_raw(row?)?);
+        }
+        Ok(result)
+    }
+
     pub fn observation_count(&self) -> Result<i64> {
         Ok(self
             .conn
