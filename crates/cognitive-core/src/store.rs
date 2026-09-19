@@ -85,7 +85,7 @@ struct ExportEntry {
 }
 
 pub struct PersistentMemoryStore {
-    conn: Connection,
+    pub(crate) conn: Connection,
 }
 
 impl PersistentMemoryStore {
@@ -109,7 +109,38 @@ impl PersistentMemoryStore {
                 deleted_at TEXT,
                 FOREIGN KEY(source_event_id) REFERENCES events(id)
              );
-             CREATE INDEX IF NOT EXISTS idx_memories_topic ON memories(topic_key);",
+             CREATE INDEX IF NOT EXISTS idx_memories_topic ON memories(topic_key);
+             CREATE TABLE IF NOT EXISTS observations (
+                id TEXT PRIMARY KEY,
+                source_key TEXT NOT NULL,
+                version INTEGER NOT NULL CHECK(version>0),
+                value TEXT NOT NULL,
+                event_id TEXT NOT NULL,
+                observed_at TEXT NOT NULL,
+                FOREIGN KEY(event_id) REFERENCES events(id),
+                UNIQUE(source_key, version)
+             );
+             CREATE INDEX IF NOT EXISTS idx_observations_source
+               ON observations(source_key,version DESC);
+             CREATE TABLE IF NOT EXISTS working_facts (
+                id TEXT PRIMARY KEY,
+                entity TEXT NOT NULL,
+                attribute TEXT NOT NULL,
+                value TEXT NOT NULL,
+                kind TEXT NOT NULL CHECK(kind IN ('observed','derived')),
+                status TEXT NOT NULL CHECK(status IN ('observed','derived','stale','disputed')),
+                created_at TEXT NOT NULL,
+                stale_at TEXT
+             );
+             CREATE INDEX IF NOT EXISTS idx_working_facts_entity ON working_facts(entity,attribute);
+             CREATE TABLE IF NOT EXISTS fact_evidence (
+                fact_id TEXT NOT NULL,
+                observation_id TEXT NOT NULL,
+                PRIMARY KEY(fact_id,observation_id),
+                FOREIGN KEY(fact_id) REFERENCES working_facts(id),
+                FOREIGN KEY(observation_id) REFERENCES observations(id)
+             );
+             CREATE INDEX IF NOT EXISTS idx_fact_evidence_observation ON fact_evidence(observation_id);"
         )?;
         Ok(Self { conn })
     }
