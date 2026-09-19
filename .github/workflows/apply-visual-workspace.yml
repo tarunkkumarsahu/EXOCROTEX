@@ -27,6 +27,7 @@ jobs:
       - name: Install source and verify backend
         run: |
           cat bootstrap/workspace.part{1,2,3,4,5,6,7,8,9} | base64 --decode | tar -xzf - -C .
+          sed -i -e 's/raw\.id/raw.0/g' -e 's/raw\.entity/raw.1/g' -e 's/raw\.attribute/raw.2/g' -e 's/raw\.value/raw.3/g' -e 's/raw\.kind/raw.4/g' -e 's/raw\.status/raw.5/g' -e 's/raw\.created_at/raw.6/g' -e 's/raw\.stale_at/raw.7/g' crates/cognitive-core/src/working_state.rs
           cargo fmt --all
           cargo check --workspace
           cargo clippy --workspace --all-targets -- -D warnings
