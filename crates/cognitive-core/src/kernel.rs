@@ -19,12 +19,7 @@ impl CognitiveKernel {
     }
 
     pub fn observe_user(&mut self, content: impl Into<String>) -> CognitiveEvent {
-        let event = CognitiveEvent::new(
-            EventKind::UserStatement,
-            EventSource::User,
-            content,
-            1.0,
-        );
+        let event = CognitiveEvent::new(EventKind::UserStatement, EventSource::User, content, 1.0);
         self.events.push(event.clone());
         event
     }
@@ -46,9 +41,7 @@ impl CognitiveKernel {
 
         self.memories
             .iter()
-            .filter(|memory| {
-                needle.is_empty() || memory.text.to_lowercase().contains(&needle)
-            })
+            .filter(|memory| needle.is_empty() || memory.text.to_lowercase().contains(&needle))
             .collect()
     }
 

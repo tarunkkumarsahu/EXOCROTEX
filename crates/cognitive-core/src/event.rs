@@ -13,6 +13,8 @@ pub enum EventKind {
     ActionProposal,
     ActionOutcome,
     Reflection,
+    MemorySuperseded,
+    MemoryDeleted,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

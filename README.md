@@ -1,94 +1,52 @@
 # EXOCORTEX
 
-EXOCORTEX is an experimental human cognitive-extension system. Its goal is to increase useful human cognitive bandwidth—memory, reasoning, planning, attention, and decision support—while keeping the human in control of consequential actions.
+A Rust-first experimental human cognitive-extension system. The human retains authority over consequential actions; models and tools will be replaceable adapters around a typed cognitive kernel.
 
-This repository is being built as a **cognitive systems platform**, not as a chatbot wrapper.
+## Working milestones
 
-## Core principle
+**V0.1** — Rust cognitive events, provenance types, action proposals, approval boundary and interactive CLI.
 
-> Autonomous cognition, permissioned action.
+**V0.2** — local SQLite-backed memory store, four memory kinds, source/timestamp/epistemic tracking, correction/supersession, explicit-topic conflict flags, redaction, JSON export, standalone DB backups and restart tests.
 
-The system may remember, retrieve, reason, critique, simulate, and prepare actions. External or high-impact actions must cross an explicit human-approval boundary.
+V0.2 is **not yet an AI reasoning engine**: the CLI does not use an LLM, execute external tools, automatically verify factual truth or run scheduled reminders. V0.1 action proposals remain session-only.
 
-## V0
+## Start on Windows / PowerShell
 
-The first milestone is a small, typed Rust cognitive kernel with:
+Install stable Rust + MSVC build tools first, then inside the repository:
 
-- cognitive events and provenance
-- multiple memory types
-- epistemic labels (fact vs inference vs hypothesis vs prediction)
-- action-risk classification
-- human-approval gating
-- an interactive CLI for exercising the kernel
-- tests and CI
-
-LLM providers, vector retrieval, PostgreSQL, Python experiments, and a desktop UI come later. The kernel should stay useful even if any model provider or agent framework changes.
-
-## Architecture
-
-```text
-Human
-  |
-  v
-Interface / CLI
-  |
-  v
-+-----------------------------+
-| Rust Cognitive Kernel       |
-| events | memory | policy    |
-| state  | approval | audit   |
-+-------------+---------------+
-              |
-      intelligence adapters
-              |
-      LLMs / Python / tools
-```
-
-Rust owns trusted state, permissions, event semantics, and orchestration. Python will own fast AI/ML research and evaluation. TypeScript/Tauri can own the human interface. PostgreSQL can become the canonical persistent store.
-
-Read the deeper architecture notes in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-
-## Run V0
-
-Install stable Rust, then:
-
-```bash
+```powershell
 cargo check --workspace
 cargo test --workspace
 cargo run -p exo-cli
 ```
 
-Inside the CLI:
+First try:
 
 ```text
-:remember Our first experiment compares chatbot vs cognitive kernel.
-:recall experiment
-:propose Send the experiment decision to professor
-:pending
-:approve <proposal-uuid>
-:status
+exo> :remember EXOCORTEX is our cognitive extension project.
+exo> :recall EXOCORTEX
+exo> :exit
 ```
 
-The external-write proposal will remain blocked until explicit approval.
+Run `cargo run -p exo-cli` again and `:recall EXOCORTEX`. The record should still be there with its source event UUID and timestamp. To inspect the source, paste that source UUID into `:source <uuid>`.
 
-## Repository layout
+Default DB: `%USERPROFILE%\.exocortex\memory.sqlite3` on Windows, or `$HOME/.exocortex/memory.sqlite3` elsewhere. For an isolated development DB use `cargo run -p exo-cli -- --db .\test-memory.sqlite3`.
+
+Run `:help` for all commands, including `:remember-kind`, `:remember-topic`, `:conflicts`, `:correct`, `:forget`, `:export` and `:backup`.
+
+**Privacy:** The local database and its backups/exports can contain personal information. Keep them out of Git, avoid storing secrets in V0.2, and read [memory semantics and limits](docs/MEMORY_V02.md) before using deletion or backup features.
+
+## Structure
 
 ```text
-apps/
-  exo-cli/             interactive kernel shell
-
-crates/
-  cognitive-core/      events, memory, policy, kernel
-
-docs/
-  ARCHITECTURE.md      design invariants and roadmap
-
-.github/workflows/
-  ci.yml               fmt, check, clippy, tests
+crates/cognitive-core/src/
+  event.rs         typed events
+  memory.rs        typed memory and provenance
+  permission.rs    permission boundary (V0.1)
+  kernel.rs        in-memory session kernel (V0.1)
+  store.rs         SQLite-backed V0.2 memory
+crates/cognitive-core/tests/persistence.rs
+apps/exo-cli/src/main.rs
 ```
 
-## Status
-
-**V0.1 foundation implemented on the cognitive-kernel feature branch.**
-
-Current scope is deliberately small: prove the kernel semantics first, then add persistence, model adapters, retrieval, and the full cognitive loop.
+V0.3 will add evidence-linked working-state updates, source freshness and deterministic checks before tool execution. JARVIS remains a separate project until a stable, permission-aware cognitive API is available.
