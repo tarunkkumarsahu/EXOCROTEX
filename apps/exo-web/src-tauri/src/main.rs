@@ -1,5 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod ai;
+
 use std::path::PathBuf;
 
 use cognitive_core::{
@@ -127,6 +129,8 @@ fn main() {
     tauri::Builder::default()
         .manage(DatabasePath(db_path))
         .invoke_handler(tauri::generate_handler![
+            ai::ai_models,
+            ai::ai_chat,
             workspace_status,
             list_memories,
             remember,
