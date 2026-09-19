@@ -1,0 +1,36 @@
+name: Apply V0.2 source package
+
+on:
+  push:
+    branches:
+      - feat/persistent-memory-v02
+    paths:
+      - bootstrap/v02.part4
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/persistent-memory-v02
+          persist-credentials: true
+
+      - name: Apply source package
+        run: |
+          cat bootstrap/v02.part{1,2,3,4} | base64 --decode | tar -xzf - -C .
+          rm bootstrap/v02.part{1,2,3,4}
+          cargo fmt --all
+          cargo test --workspace
+
+      - name: Commit and push V0.2
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat: persistent evidence-linked memory V0.2"
+          git push origin HEAD:feat/persistent-memory-v02
