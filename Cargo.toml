@@ -4,6 +4,7 @@ members = [
     "apps/exo-cli",
     "apps/exo-api",
 ]
+exclude = ["apps/exo-web/src-tauri"]
 resolver = "2"
 
 [workspace.package]
