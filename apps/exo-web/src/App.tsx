@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { Activity, ArrowDownRight, ArrowRight, BookOpen, BrainCircuit, Check, ChevronRight, CircleHelp, Clock3, Database, ExternalLink, Eye, FileClock, GitBranch, Layers, LockKeyhole, Menu, Plus, RefreshCw, Search, ShieldCheck, Trash2, X } from 'lucide-react'
+import AIChat from './AIChat'
 import { api, type CognitiveEvent, type MemoryKind, type MemoryConflict, type Observation, type Status, type StoredMemory, type WorkingFact } from './api'
 
-type Page = 'overview' | 'memory' | 'evidence' | 'connections'
+type Page = 'overview' | 'chat' | 'memory' | 'evidence' | 'connections'
 type Selection = { title: string; event?: CognitiveEvent; conflicts?: MemoryConflict[] }
 
 function formatDate(value: string): string {
@@ -139,6 +140,7 @@ export default function App() {
       <nav aria-label="Main navigation">
         {([
           ['overview', Activity, 'Overview'],
+          ['chat', BrainCircuit, 'Cognitive chat'],
           ['memory', Database, 'Memory vault'],
           ['evidence', GitBranch, 'Evidence & facts'],
           ['connections', Layers, 'Connections'],
@@ -147,16 +149,17 @@ export default function App() {
         )}
       </nav>
       <div className="sidebar-spacer" />
-      <div className="runtime-box"><div className="runtime-top"><span className={`pulse ${online ? '' : 'offline'}`} /> <span>{online ? 'KERNEL ONLINE' : 'API OFFLINE'}</span></div><span>Rust engine · SQLite memory</span><span>Local development · V0.4/0.5</span></div>
+      <div className="runtime-box"><div className="runtime-top"><span className={`pulse ${online ? '' : 'offline'}`} /> <span>{online ? 'KERNEL ONLINE' : 'API OFFLINE'}</span></div><span>Rust engine · SQLite memory</span><span>Local-first · V0.7</span></div>
       <div className="sidebar-bottom"><LockKeyhole size={15}/> Local-first research prototype</div>
     </aside>
 
     {menuOpen && <button aria-label="Close navigation" className="mobile-backdrop" onClick={() => setMenuOpen(false)}/>}
     <main className="main">
-      <header className="topbar"><button className="mobile-menu icon-button" aria-label="Open navigation" onClick={() => setMenuOpen(true)}><Menu size={20}/></button><div className="breadcrumbs">WORKSPACE <ChevronRight size={13}/> <span>{page === 'overview' ? 'Overview' : page === 'memory' ? 'Memory vault' : page === 'evidence' ? 'Evidence & facts' : 'Connections'}</span></div><div className="topbar-right"><span className="topbar-version">V0.4 / V0.5</span><button className="icon-button refresh-button" title="Refresh live database state" aria-label="Refresh" onClick={() => { setLoading(true); void refresh() }}><RefreshCw size={16}/></button><div className="user-avatar">EX</div></div></header>
+      <header className="topbar"><button className="mobile-menu icon-button" aria-label="Open navigation" onClick={() => setMenuOpen(true)}><Menu size={20}/></button><div className="breadcrumbs">WORKSPACE <ChevronRight size={13}/> <span>{page === 'overview' ? 'Overview' : page === 'chat' ? 'Cognitive chat' : page === 'memory' ? 'Memory vault' : page === 'evidence' ? 'Evidence & facts' : 'Connections'}</span></div><div className="topbar-right"><span className="topbar-version">V0.7 LOCAL AI</span><button className="icon-button refresh-button" title="Refresh live database state" aria-label="Refresh" onClick={() => { setLoading(true); void refresh() }}><RefreshCw size={16}/></button><div className="user-avatar">EX</div></div></header>
       <div className="content">
         {error && <div className="banner error" role="alert"><CircleHelp size={17}/><span>{error}</span><button onClick={() => setError('')} aria-label="Dismiss error"><X size={15}/></button></div>}
         {notice && <div className="banner notice" role="status"><Check size={17}/><span>{notice}</span><button onClick={() => setNotice('')} aria-label="Dismiss message"><X size={15}/></button></div>}
+        {page === 'chat' && <AIChat/>}
         {page === 'overview' && <>
           <div className="hero"><div className="hero-copy"><span className="eyebrow"><span className="green-dot"/> YOUR PERSONAL COGNITIVE WORKSPACE</span><h1>Think bigger.<br/><em>Remember everything that matters.</em></h1><p>One place to inspect your memory, trace evidence and carry context across sessions. Your decisions stay yours.</p><div className="hero-actions"><button className="primary" onClick={() => { navigate('memory'); setAddOpen(true) }}><Plus size={17}/> Capture a memory</button><button className="ghost-button" onClick={() => navigate('evidence')}>Inspect evidence <ArrowRight size={17}/></button></div></div><div className="hero-art" aria-hidden="true"><div className="orbit orbit-a"/><div className="orbit orbit-b"/><div className="orbit orbit-c"/><div className="core-brain"><BrainCircuit size={56} strokeWidth={1.15}/></div><span className="orbit-node n-one"/><span className="orbit-node n-two"/><span className="orbit-node n-three"/></div></div>
           <div className="section-heading"><div><span className="eyebrow">LIVE SYSTEM</span><h2>Your cognitive state</h2></div><span className="section-description">Directly from your local SQLite database</span></div>
@@ -182,7 +185,7 @@ export default function App() {
           <section className="panel facts-panel"><div className="panel-head"><div><span className="eyebrow">WORKING STATE</span><h3>Facts and freshness</h3></div><Pill tone={staleCount ? 'amber' : 'green'}>{staleCount} stale</Pill></div><div className="table-toolbar"><div className="search-box"><Search size={17}/><input value={entitySearch} onChange={e => setEntitySearch(e.target.value)} placeholder="Filter entity, status or value…" aria-label="Search working facts"/></div><span className="small-muted">{visibleFacts.length} facts</span></div><div className="facts-list">{visibleFacts.length ? visibleFacts.map(f => <div className="fact-row" key={f.id}><div><div className="memory-meta"><Pill tone={f.status === 'Stale' ? 'amber' : f.status === 'Disputed' ? 'red' : 'green'}>{f.status}</Pill><Pill>{f.kind}</Pill></div><strong>{f.entity}.{f.attribute}</strong><p>{f.value}</p><div className="memory-secondary">Evidence: {f.evidence_ids.map(id => <ShortId key={id} value={id}/>)}</div></div><time>{formatDate(f.created_at)}</time></div>) : <Empty title="No working facts to show" detail="Record a source observation, then create a working fact citing its UUID."/>}</div></section>
         </>}
 
-        {page === 'connections' && <><div className="page-heading"><div><span className="eyebrow">FUTURE CONNECTIVITY</span><h1>Connected intelligence</h1><p>EXOCORTEX has a working local API. External model integrations, automation and JARVIS remain separate milestones.</p></div></div><div className="connection-grid"><Connection icon={<BrainCircuit size={22}/>} title="LLM reasoning adapter" detail="Model-independent structured proposals and bounded reasoning loop."/><Connection icon={<Layers size={22}/>} title="Tauri desktop" detail="Native Windows shell using the same local Rust API and React interface."/><Connection icon={<Activity size={22}/>} title="JARVIS bridge" detail="Permission-aware integration with Jarvis while both systems remain independently usable."/></div><div className="panel connection-note"><ShieldCheck size={19}/><div><strong>No external connectors are enabled.</strong><p>This interface does not pretend that AI, GitHub, email or JARVIS are operating. Real integrations will require explicit permissions and separate tests.</p></div></div></>}
+        {page === 'connections' && <><div className="page-heading"><div><span className="eyebrow">FUTURE CONNECTIVITY</span><h1>Connected intelligence</h1><p>EXOCORTEX has a working local API. External model integrations, automation and JARVIS remain separate milestones.</p></div></div><div className="connection-grid"><Connection icon={<BrainCircuit size={22}/>} title="Local cognitive chat" detail="Ollama model adapter now available in the desktop Cognitive chat section. Reasoning and citations remain experimental."/><Connection icon={<Layers size={22}/>} title="Tauri desktop" detail="Native Windows workspace connects directly to cognitive-core and uses local SQLite."/><Connection icon={<Activity size={22}/>} title="JARVIS bridge" detail="Permission-aware integration with Jarvis while both systems remain independently usable."/></div><div className="panel connection-note"><ShieldCheck size={19}/><div><strong>No external connectors are enabled.</strong><p>This interface does not pretend that AI, GitHub, email or JARVIS are operating. Real integrations will require explicit permissions and separate tests.</p></div></div></>}
       </div>
       <footer className="footer"><span>EXOCORTEX · Human cognitive extension research</span><span><span className={`pulse ${online ? '' : 'offline'}`}/> {online ? 'Connected to Rust API' : loading ? 'Connecting…' : 'Disconnected'}</span></footer>
     </main>

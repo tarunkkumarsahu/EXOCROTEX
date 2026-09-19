@@ -10,8 +10,9 @@ Rust-first experimental human cognitive extension. The human retains authority o
 - **V0.4:** Loopback Rust HTTP API for memory and evidence, with API integration tests.
 - **V0.5:** React + TypeScript visual workspace for real API-backed memory, evidence and status.
 - **V0.6:** Tauri 2 Windows desktop shell with direct Rust cognitive commands and the same SQLite memory database.
+- **V0.7:** Read-only local AI chat through Ollama, bounded lexical retrieval of saved memories and evidence, inspectable context IDs, and a native chat page.
 
-**Not implemented:** AI model reasoning, JARVIS integration, autonomous external-action execution, or a signed public installer. The desktop development window works; CI packaging and release signing are separate checks.
+**Not implemented:** JARVIS integration, autonomous external-action execution, a verified multi-step reasoning loop or independently verified AI answers. A local model can answer questions, but a fluent answer is not proof. Installer signing and distribution remain separate work.
 
 ## Run the visual workspace on Windows
 
@@ -59,3 +60,9 @@ npm run desktop
 ```
 
 This starts the native **development** window. To build a standalone Windows installer instead, run `npm run desktop:build` in the same folder. The installed app opens the existing `%USERPROFILE%\.exocortex\memory.sqlite3` directly; unlike browser mode, it does not require a separate HTTP API process. See [V0.6 setup, data safeguards, and packaging status](docs/DESKTOP_V06.md). Keep personal SQLite data and backups out of Git.
+
+## Local AI chat (V0.7)
+
+Install Ollama locally, then in PowerShell run `ollama pull qwen2.5:3b`. Launch the desktop app with `cd apps\exo-web` and `npm run desktop`, open **Cognitive chat**, press **Refresh**, and choose an installed model. Each question uses a small selected set of existing SQLite memories and facts; expand **Context supplied** to inspect IDs and statuses. Model output is AI-generated and can be mistaken. No chat transcript is automatically saved and no external actions or JARVIS tools are executed. If Ollama is not running, the app shows an explicit offline state rather than a fabricated response.
+
+See [V0.7 local-model setup and privacy boundaries](docs/LOCAL_AI_V07.md) for the actual data flow and limitations.
