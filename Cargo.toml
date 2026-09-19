@@ -2,12 +2,13 @@
 members = [
     "crates/cognitive-core",
     "apps/exo-cli",
+    "apps/exo-api",
 ]
 resolver = "2"
 
 [workspace.package]
 edition = "2021"
-version = "0.3.0"
+version = "0.4.0"
 
 [workspace.dependencies]
 chrono = { version = "0.4", features = ["serde"] }
