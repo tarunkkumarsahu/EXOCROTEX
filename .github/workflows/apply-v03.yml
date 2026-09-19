@@ -1,0 +1,38 @@
+name: Apply V0.3 working-state patch
+
+on:
+  push:
+    branches:
+      - feat/evidence-linked-state-v03
+    paths:
+      - bootstrap/v03.part6
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/evidence-linked-state-v03
+          persist-credentials: true
+
+      - name: Apply source patch and run checks
+        run: |
+          cat bootstrap/v03.part{1,2,3,4,5,6} | base64 --decode | tar -xzf - -C .
+          rm bootstrap/v03.part{1,2,3,4,5,6}
+          cargo fmt --all
+          cargo check --workspace
+          cargo clippy --workspace --all-targets -- -D warnings
+          cargo test --workspace
+
+      - name: Commit and push validated V0.3
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat: evidence-linked working state V0.3"
+          git push origin HEAD:feat/evidence-linked-state-v03
