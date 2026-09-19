@@ -4,6 +4,8 @@ on:
   push:
     branches: [feat/visual-workspace-v04-v05]
     paths: [bootstrap/workspace.part9]
+  pull_request:
+    branches: [feat/evidence-linked-state-v03]
 
 permissions:
   contents: write
