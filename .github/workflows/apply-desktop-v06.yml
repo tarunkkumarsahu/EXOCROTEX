@@ -1,13 +1,10 @@
 name: Apply V0.6 desktop source
-
 on:
   push:
     branches: ["feat/desktop-v06"]
-    paths: ["bootstrap/v06.part5"]
-
+    paths: ["bootstrap/v06.part3"]
 permissions:
   contents: write
-
 jobs:
   apply:
     runs-on: ubuntu-latest
@@ -16,10 +13,12 @@ jobs:
         with:
           ref: feat/desktop-v06
           persist-credentials: true
-      - name: Extract desktop source and remove bootstrap
+      - name: Extract desktop source and clean bootstrap
         run: |
-          cat bootstrap/v06.part{1,2,3,4,5} | base64 --decode | tar -xz -C .
-          rm bootstrap/v06.part{1,2,3,4,5}
+          cat bootstrap/v06.part{1,2,3} | base64 --decode | tar -xz -C .
+          rm bootstrap/v06.part{1,2,3}
+          printf '\napps/exo-web/src-tauri/target/\napps/exo-web/src-tauri/gen/\napps/exo-web/src-tauri/icons/\napps/exo-web/src-tauri/Cargo.lock\napps/exo-web/node_modules/\napps/exo-web/dist/\n' >> .gitignore
+          printf '\n## Native Windows desktop V0.6\n\nRun `cd apps/exo-web; npm install; npm run desktop` for a desktop dev window or `npm run desktop:build` for an NSIS installer. The installed app uses the existing SQLite DB, no local HTTP server. See [docs/DESKTOP_V06.md](docs/DESKTOP_V06.md).\n' >> README.md
           cargo fmt --all
       - name: Commit and push desktop feature
         run: |
